@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "run": "ts-node index.ts --watch"
+    "start": "ts-node index.ts --watch"
   },
   "author": "",
   "license": "ISC",

@@ -25,6 +25,11 @@ interface SummaryResponse {
 }
 interface Game {
     appid: number;
+    playtime_2weeks: number;
+    playtime_forever: number;
+    name: string;
+    img_icon_url: string;
+    img_logo_url: string;
 }
 interface GameResponse {
     response?: {
@@ -67,6 +72,9 @@ const makeOwnedUrl = (steamId: string) => {
 }
 const makeAppUrl = (appIds: string) => {
     return `${steamAppUrl}/?key=${process.env.STEAM_API_KEY}&appids=${appIds}`;
+}
+const makeRecentUrl = (steamId: string) => {
+    return `${steamPlayerUrl}/GetRecentlyPlayedGames/v0001/?key=${process.env.STEAM_API_KEY}&steamId=${steamId}`;
 }
 
 
@@ -152,9 +160,31 @@ app.get('/owned', async (req, res) => {
     }
 })
 
-const filterShared = (ownedLists: Game[][]) => {
-    // console.log(ownedLists[0]);
-    return ownedLists[0].filter(game => ownedLists.every(list => list.find(searchGame => searchGame.appid === game.appid)));
+const filterShared = (ownedLists: Game[][], steamIds: string[]) => {
+    const sharedList = [];
+    const primaryUsersList = ownedLists[0];
+
+    primaryUsersList.forEach(game => {
+        const userStats = [];
+        const isShared = ownedLists.every((list, index) => {
+            const found = list.find(searchGame => searchGame.appid === game.appid);
+            if (!found) {
+                return false;
+            }
+            userStats.push({ steamId: steamIds[index], playtime_2weeks: found.playtime_2weeks, playtime_forever: found.playtime_forever })
+            return true;
+        });
+        if (isShared) {
+            sharedList.push({
+                appid: game.appid,
+                name: game.name,
+                img_icon_url: game.img_icon_url,
+                img_logo_url: game.img_logo_url,
+                userStats
+            })
+        }
+    })
+    return sharedList;
 }
 
 app.get('/shared', async (req, res) => {
@@ -171,15 +201,27 @@ app.get('/shared', async (req, res) => {
         if (games.every(game => !game)) {
             res.sendStatus(404);
         } else {
-            const shared = filterShared(games);
-            console.log(shared);
+            const shared = filterShared(games, ids);
             res.send(shared);
         }
     } catch (error) {
         res.status(500).send(error);
     }
 })
+const getRecent = (steamId: string) => getPromise(makeRecentUrl(steamId));
 
+app.get('/recent', async (req, res) => {
+    const steamId = req.query["steamid"] as string;
+    if (!steamId) {
+        return res.status(400).send('Bad Request: Please provide steamid in the query')
+    }
+    try {
+        const appResponse: any = await getRecent(steamId);
+        res.send(appResponse)
+    } catch (error) {
+        res.status(500).send(error);
+    }
+})
 const getApps = (appIds: string) => getPromise(makeAppUrl(appIds));
 
 app.get('/app', async (req, res) => {
@@ -189,13 +231,7 @@ app.get('/app', async (req, res) => {
     }
     try {
         const appResponse: any = await getApps(appIds);
-        console.log(appResponse)
         res.send(appResponse)
-        // if (!summaryResponse.response?.players) {
-        //     res.sendStatus(404);
-        // } else {
-        //     res.send(summaryResponse.response.players);
-        // }
     } catch (error) {
         res.status(500).send(error);
     }

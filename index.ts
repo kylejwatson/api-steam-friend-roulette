@@ -2,11 +2,70 @@ import express from 'express';
 import http from 'http';
 import cors from 'cors';
 import { config } from 'dotenv';
+import passport from 'passport';
+import session from 'express-session';
+import { Strategy as SteamStrategy } from 'passport-steam';
+
 config()
 
 const app = express()
 app.use(cors());
 const port = 3000
+
+app.use(session({
+    secret: 'your secret',
+    name: 'name of session id',
+    resave: true,
+    saveUninitialized: true
+}));
+
+// Initialize Passport!  Also use passport.session() middleware, to support
+// persistent login sessions (recommended).
+app.use(passport.initialize());
+app.use(passport.session());
+app.use(passport.initialize());
+
+passport.serializeUser(function (user, done) {
+    done(null, user);
+});
+
+passport.deserializeUser(function (obj, done) {
+    done(null, obj);
+});
+passport.use(new SteamStrategy({
+    returnURL: 'http://localhost:3000/steam',
+    realm: 'http://localhost:3000/',
+    apiKey: process.env.STEAM_API_KEY,
+    profile: false
+},
+    function (identifier, profile, done) {
+        // console.log(done);
+        // return next(profile.id);
+        console.log(identifier);
+        // console.log(profile);
+        return done(null, identifier);
+    }
+));
+app.get('/steam',
+    passport.authenticate('steam', { failureRedirect: '/login' }),
+    function (req: any, res) {
+        console.log(req)
+        const id = req.user.split('/').pop();
+        const url = `http://localhost:4200/steam-id/?id=${id}`;
+        console.log(url)
+        // console.log(url);
+        // res.send(req)
+        // Successful authentication, redirect home.
+        res.redirect(url);
+        // res.end();
+    });
+app.get('/auth',
+    passport.authenticate('steam'),
+    function (req, res) {
+        // The request will be redirected to Steam for authentication, so
+        // this function will not be called.
+    });
+
 
 interface Friend {
     steamid: string;

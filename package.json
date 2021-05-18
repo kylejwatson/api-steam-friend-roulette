@@ -4,15 +4,21 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "start": "ts-node index.ts --watch"
+    "start": "ts-node index.ts"
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
     "@types/cors": "^2.8.10",
+    "@types/express-session": "^1.17.3",
+    "@types/passport": "^1.0.6",
+    "@types/passport-steam": "^1.0.1",
     "cors": "^2.8.5",
     "dotenv": "^9.0.2",
     "express": "^4.17.1",
+    "express-session": "^1.17.1",
+    "passport": "^0.4.1",
+    "passport-steam": "^1.0.15",
     "ts-node": "^9.1.1"
   },
   "devDependencies": {

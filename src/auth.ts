@@ -6,7 +6,7 @@ import { Express } from 'express';
 
 export const init = (app: Express) => {
     app.use(session({
-        secret: process.env.SESSION_SECRET,
+        secret: process.env.SESSION_SECRET || 'set-to-real-secret-in-dot-env-file',
         name: 'steam-friend-roulette',
         resave: true,
         saveUninitialized: true
@@ -14,10 +14,10 @@ export const init = (app: Express) => {
     app.use(passport.initialize());
     app.use(passport.session());
 
-    passport.serializeUser(function (user, done) {
+    passport.serializeUser((user, done) => {
         done(null, user);
     });
-    passport.deserializeUser(function (obj, done) {
+    passport.deserializeUser((obj: Express.User, done) => {
         done(null, obj);
     });
     passport.use(new SteamStrategy({
@@ -26,7 +26,7 @@ export const init = (app: Express) => {
         apiKey: process.env.STEAM_API_KEY,
         profile: false
     },
-        (identifier, profile, done) => {
+        (identifier: string, profile: Express.User, done: (flag: any, param: string) => void) => {
             return done(null, identifier);
         }
     ));
@@ -34,7 +34,7 @@ export const init = (app: Express) => {
     app.get('/auth', passport.authenticate('steam'),
         (req: any, res) => {
             const id = req.user.split('/').pop();
-            const url = `${process.env.UI_URL}/steam-id/?id=${id}`;
+            const url = `${process.env.UI_URL}/steam-id;id=${id}`;
             res.redirect(url);
         });
-}
+};

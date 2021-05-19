@@ -13,7 +13,7 @@ export interface SummaryResponse {
         players: [];
     };
 }
-export interface Game {
+export interface OwnedGame {
     appid: number;
     playtime_2weeks: number;
     playtime_forever: number;
@@ -21,9 +21,9 @@ export interface Game {
     img_icon_url: string;
     img_logo_url: string;
 }
-export interface GameResponse {
+export interface OwnedGameResponse {
     response?: {
-        games: Game[];
+        games: OwnedGame[];
     };
 }
 export interface SharedResponse {
@@ -37,4 +37,11 @@ export interface UserStats {
     steamId: string;
     playtime_2weeks: number;
     playtime_forever: number;
+}
+export interface AppResponse {
+    [key: string]: {
+        data?: {
+
+        }
+    };
 }

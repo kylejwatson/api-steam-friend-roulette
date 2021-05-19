@@ -1,7 +1,7 @@
-import { Game, SharedResponse, UserStats } from './types';
-import * as http from 'http';
+import { OwnedGame, SharedResponse, UserStats } from './types';
+import * as https from 'https';
 
-export const filterShared = (ownedLists: Game[][], steamIds: string[]) => {
+export const filterShared = (ownedLists: OwnedGame[][], steamIds: string[]) => {
     const sharedList: SharedResponse[] = [];
     const primaryUsersList = ownedLists[0];
 
@@ -30,7 +30,7 @@ export const filterShared = (ownedLists: Game[][], steamIds: string[]) => {
 
 export const getPromise = (url: string): Promise<any> => {
     return new Promise((resolve, reject) => {
-        http.get(url, (response) => {
+        https.get(url, (response) => {
             let data = '';
             response.on('data', (chunk) => {
                 data += chunk;

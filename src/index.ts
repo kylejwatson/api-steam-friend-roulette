@@ -1,7 +1,7 @@
 import express from 'express';
 import cors from 'cors';
 import { config } from 'dotenv';
-import { FriendResponse, SummaryResponse, GameResponse, Game } from './types';
+import { FriendResponse, SummaryResponse, OwnedGameResponse, AppResponse } from './types';
 import { getPromise, filterShared } from './utils';
 import { init } from './auth';
 
@@ -15,9 +15,9 @@ app.use(cors({
 const port = process.env.PORT;
 init(app);
 
-const steamFriendUrl = 'http://api.steampowered.com/ISteamUser';
-const steamPlayerUrl = 'http://api.steampowered.com/IPlayerService';
-const steamAppUrl = 'http://store.steampowered.com/api/appdetails';
+const steamFriendUrl = 'https://api.steampowered.com/ISteamUser';
+const steamPlayerUrl = 'https://api.steampowered.com/IPlayerService';
+const steamAppUrl = 'https://store.steampowered.com/api/appdetails';
 
 const makeFriendsUrl = (steamId: string) => {
     return `${steamFriendUrl}/GetFriendList/v0001/?key=${process.env.STEAM_API_KEY}&steamid=${steamId}`;
@@ -29,7 +29,7 @@ const makeOwnedUrl = (steamId: string) => {
     return `${steamPlayerUrl}/GetOwnedGames/v0001/?key=${process.env.STEAM_API_KEY}&steamid=${steamId}&include_appinfo=true`;
 };
 const makeAppUrl = (appIds: string) => {
-    return `${steamAppUrl}/?key=${process.env.STEAM_API_KEY}&appids=${appIds}`;
+    return `${steamAppUrl}/?appids=${appIds}`;
 };
 const makeRecentUrl = (steamId: string) => {
     return `${steamPlayerUrl}/GetRecentlyPlayedGames/v0001/?key=${process.env.STEAM_API_KEY}&steamId=${steamId}`;
@@ -110,7 +110,7 @@ app.get('/owned', async (req, res): Promise<void> => {
         return;
     }
     try {
-        const ownedResponse: GameResponse = await getOwned(steamId);
+        const ownedResponse: OwnedGameResponse = await getOwned(steamId);
         const games = ownedResponse.response?.games;
         if (!games) {
             res.sendStatus(404);
@@ -130,7 +130,7 @@ app.get('/shared', async (req, res): Promise<void> => {
     }
     try {
         const ids = steamIds.split(',');
-        const ownedResponse: GameResponse[] = await Promise.all(ids.map(id => {
+        const ownedResponse: OwnedGameResponse[] = await Promise.all(ids.map(id => {
             return getOwned(id);
         }));
         const games = ownedResponse.map(owned => owned.response?.games || []);
@@ -166,9 +166,15 @@ app.get('/app', async (req, res): Promise<void> => {
         res.status(400).send('Bad Request: Please provide appids in the query');
         return;
     }
+    const ids = appIds.split(',');
     try {
-        const appResponse: any = await getApps(appIds);
-        res.send(appResponse);
+        const appResponse: AppResponse = await getApps(appIds);
+        const data = appResponse[appIds].data;
+        if (data) {
+            res.send(data);
+        } else {
+            res.sendStatus(404);
+        }
     } catch (error) {
         res.status(500).send(error);
     }

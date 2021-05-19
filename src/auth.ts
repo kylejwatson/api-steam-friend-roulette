@@ -34,7 +34,7 @@ export const init = (app: Express) => {
     app.get('/auth', passport.authenticate('steam'),
         (req: any, res) => {
             const id = req.user.split('/').pop();
-            const url = `${process.env.UI_URL}/steam-id;id=${id}`;
+            const url = `${process.env.UI_URL}/steam-id?id=${id}`;
             res.redirect(url);
         });
 };

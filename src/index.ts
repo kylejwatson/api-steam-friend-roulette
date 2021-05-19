@@ -8,7 +8,10 @@ import { init } from './auth';
 config();
 
 const app = express();
-app.use(cors());
+app.use(cors({
+    origin: process.env.UI_URL,
+    methods: 'GET'
+}));
 const port = process.env.PORT;
 init(app);
 

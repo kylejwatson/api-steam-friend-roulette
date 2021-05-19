@@ -1,120 +1,16 @@
 import express from 'express';
-import http from 'http';
 import cors from 'cors';
 import { config } from 'dotenv';
-import passport from 'passport';
-import session from 'express-session';
-import { Strategy as SteamStrategy } from 'passport-steam';
+import { FriendResponse, SummaryResponse, GameResponse, Game } from './types';
+import { getPromise, filterShared } from './utils';
+import { init } from './auth';
 
 config()
 
 const app = express()
 app.use(cors());
-const port = 3000
-
-app.use(session({
-    secret: 'your secret',
-    name: 'name of session id',
-    resave: true,
-    saveUninitialized: true
-}));
-
-// Initialize Passport!  Also use passport.session() middleware, to support
-// persistent login sessions (recommended).
-app.use(passport.initialize());
-app.use(passport.session());
-app.use(passport.initialize());
-
-passport.serializeUser(function (user, done) {
-    done(null, user);
-});
-
-passport.deserializeUser(function (obj, done) {
-    done(null, obj);
-});
-passport.use(new SteamStrategy({
-    returnURL: 'http://localhost:3000/steam',
-    realm: 'http://localhost:3000/',
-    apiKey: process.env.STEAM_API_KEY,
-    profile: false
-},
-    function (identifier, profile, done) {
-        // console.log(done);
-        // return next(profile.id);
-        console.log(identifier);
-        // console.log(profile);
-        return done(null, identifier);
-    }
-));
-app.get('/steam',
-    passport.authenticate('steam', { failureRedirect: '/login' }),
-    function (req: any, res) {
-        console.log(req)
-        const id = req.user.split('/').pop();
-        const url = `http://localhost:4200/steam-id/?id=${id}`;
-        console.log(url)
-        // console.log(url);
-        // res.send(req)
-        // Successful authentication, redirect home.
-        res.redirect(url);
-        // res.end();
-    });
-app.get('/auth',
-    passport.authenticate('steam'),
-    function (req, res) {
-        // The request will be redirected to Steam for authentication, so
-        // this function will not be called.
-    });
-
-
-interface Friend {
-    steamid: string;
-    relationship: string;
-    friend_since: number;
-}
-interface FriendResponse {
-    friendslist?: {
-        friends: Friend[];
-    }
-}
-interface SummaryResponse {
-    response?: {
-        players: [];
-    }
-}
-interface Game {
-    appid: number;
-    playtime_2weeks: number;
-    playtime_forever: number;
-    name: string;
-    img_icon_url: string;
-    img_logo_url: string;
-}
-interface GameResponse {
-    response?: {
-        games: Game[];
-    }
-}
-
-const getPromise = (url: string) => {
-    return new Promise((resolve, reject) => {
-        http.get(url, (response) => {
-            let data = '';
-            response.on('data', (chunk) => {
-                data += chunk;
-            });
-            response.on('end', () => {
-                try {
-                    const json = JSON.parse(data);
-                    resolve(json);
-                } catch {
-                    reject(data);
-                }
-            })
-        }).on('error', error => reject(error));
-    });
-}
-
+const port = process.env.PORT;
+init(app);
 
 const steamFriendUrl = 'http://api.steampowered.com/ISteamUser';
 const steamPlayerUrl = 'http://api.steampowered.com/IPlayerService'
@@ -136,13 +32,12 @@ const makeRecentUrl = (steamId: string) => {
     return `${steamPlayerUrl}/GetRecentlyPlayedGames/v0001/?key=${process.env.STEAM_API_KEY}&steamId=${steamId}`;
 }
 
-
 const getFriends = (steamId: string) => getPromise(makeFriendsUrl(steamId));
 const getSummary = (steamIds: string) => getPromise(makeSummaryUrl(steamIds));
 const getOwned = (steamId: string) => getPromise(makeOwnedUrl(steamId));
 
 app.get('/friends', async (req, res) => {
-    const steamId = req.query["steamid"] as string;
+    const steamId = req.query.steamid as string;
     if (!steamId) {
         return res.status(400).send('Bad Request: Please provide steamid in the query')
     }
@@ -160,7 +55,7 @@ app.get('/friends', async (req, res) => {
 })
 
 app.get('/summary', async (req, res) => {
-    const steamIds = req.query["steamids"] as string;
+    const steamIds = req.query.steamids as string;
     if (!steamIds) {
         return res.status(400).send('Bad Request: Please provide steamids in the query')
     }
@@ -178,7 +73,7 @@ app.get('/summary', async (req, res) => {
 })
 
 app.get('/friendSummary', async (req, res) => {
-    const steamId = req.query["steamid"] as string;
+    const steamId = req.query.steamid as string;
     if (!steamId) {
         return res.status(400).send('Bad Request: Please provide steamid in the query')
     }
@@ -202,7 +97,7 @@ app.get('/friendSummary', async (req, res) => {
 })
 
 app.get('/owned', async (req, res) => {
-    const steamId = req.query["steamid"] as string;
+    const steamId = req.query.steamid as string;
     if (!steamId) {
         return res.status(400).send('Bad Request: Please provide steamid in the query')
     }
@@ -219,35 +114,8 @@ app.get('/owned', async (req, res) => {
     }
 })
 
-const filterShared = (ownedLists: Game[][], steamIds: string[]) => {
-    const sharedList = [];
-    const primaryUsersList = ownedLists[0];
-
-    primaryUsersList.forEach(game => {
-        const userStats = [];
-        const isShared = ownedLists.every((list, index) => {
-            const found = list.find(searchGame => searchGame.appid === game.appid);
-            if (!found) {
-                return false;
-            }
-            userStats.push({ steamId: steamIds[index], playtime_2weeks: found.playtime_2weeks, playtime_forever: found.playtime_forever })
-            return true;
-        });
-        if (isShared) {
-            sharedList.push({
-                appid: game.appid,
-                name: game.name,
-                img_icon_url: game.img_icon_url,
-                img_logo_url: game.img_logo_url,
-                userStats
-            })
-        }
-    })
-    return sharedList;
-}
-
 app.get('/shared', async (req, res) => {
-    const steamIds = req.query["steamids"] as string;
+    const steamIds = req.query.steamids as string;
     if (!steamIds) {
         return res.status(400).send('Bad Request: Please provide steamids in the query')
     }
@@ -267,10 +135,10 @@ app.get('/shared', async (req, res) => {
         res.status(500).send(error);
     }
 })
-const getRecent = (steamId: string) => getPromise(makeRecentUrl(steamId));
 
+const getRecent = (steamId: string) => getPromise(makeRecentUrl(steamId));
 app.get('/recent', async (req, res) => {
-    const steamId = req.query["steamid"] as string;
+    const steamId = req.query.steamid as string;
     if (!steamId) {
         return res.status(400).send('Bad Request: Please provide steamid in the query')
     }
@@ -282,9 +150,8 @@ app.get('/recent', async (req, res) => {
     }
 })
 const getApps = (appIds: string) => getPromise(makeAppUrl(appIds));
-
 app.get('/app', async (req, res) => {
-    const appIds = req.query["appids"] as string;
+    const appIds = req.query.appids as string;
     if (!appIds) {
         return res.status(400).send('Bad Request: Please provide appids in the query')
     }

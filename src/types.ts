@@ -40,9 +40,7 @@ export interface UserStats {
 }
 export interface AppResponse {
     [key: string]: {
-        data?: {
-
-        }
+        data?: any;
     };
 }
 export interface ParamObjectOptionals {

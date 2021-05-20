@@ -82,23 +82,39 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
             return;
         }
         const ids = appIds.split(',');
-        const cacheResult = cache.getKey(appIds);
-        if (cacheResult) {
-            res.send(cacheResult);
-            return;
-        }
+        const promises = ids.map(id => {
+            return new Promise<any>((resolve, reject) => {
+                const cacheResult = cache.getKey(id);
+                if (cacheResult) {
+                    cacheResult.fromCache = true;
+                    return resolve(cacheResult);
+                } else {
+                    getApps(id).then((appResponse: AppResponse) => {
+                        const data = appResponse[id].data;
+                        if (data) {
+                            data.fromCache = false;
+                            cache.setKey(id, data);
+                            return resolve(data);
+                        }
+                        reject(404);
+                    }).catch(err => reject(err));
+                }
+
+            });
+        });
+
         try {
-            const appResponse: AppResponse = await getApps(appIds);
-            const data = appResponse[appIds].data;
-            if (data) {
-                cache.setKey(appIds, data);
-                res.send(data);
+            const appResponse: any[] = await Promise.all(promises);
+            res.send(appResponse);
+            if (appResponse.some(data => !data.fromCache)) {
                 cache.save();
-            } else {
-                res.sendStatus(404);
             }
         } catch (error) {
-            res.status(500).send(error);
+            if (typeof error === 'number') {
+                res.sendStatus(error);
+            } else {
+                res.status(500).send(error);
+            }
         }
     });
 };

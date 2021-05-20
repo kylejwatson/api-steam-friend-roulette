@@ -45,3 +45,13 @@ export interface AppResponse {
         }
     };
 }
+export interface ParamObjectOptionals {
+    steamid?: string;
+    steamids?: string[];
+    relationship?: string;
+    include_appinfo?: boolean;
+}
+export interface ParamObjectCallback {
+    callback: (err: Error, data: object) => void;
+}
+export type SteamMethod = (paramObject: ParamObjectCallback & ParamObjectOptionals) => void;

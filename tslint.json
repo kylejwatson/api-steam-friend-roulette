@@ -42,11 +42,7 @@
     ],
     "no-console": [
       true,
-      "debug",
-      "info",
-      "time",
-      "timeEnd",
-      "trace"
+      "log"
     ],
     "no-empty": false,
     "no-inferrable-types": [

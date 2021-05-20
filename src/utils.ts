@@ -1,5 +1,6 @@
-import { OwnedGame, SharedResponse, UserStats } from './types';
+import { OwnedGame, ParamObjectCallback, ParamObjectOptionals, SharedResponse, UserStats } from './types';
 import * as https from 'https';
+import steamWeb from 'steam-web';
 
 export const filterShared = (ownedLists: OwnedGame[][], steamIds: string[]) => {
     const sharedList: SharedResponse[] = [];
@@ -44,5 +45,21 @@ export const getPromise = (url: string): Promise<any> => {
                 }
             });
         }).on('error', error => reject(error));
+    });
+};
+
+export const steamPromise = (steam: steamWeb, steamMethod: string, optionals: ParamObjectOptionals) => {
+    return new Promise((resolve, reject) => {
+        const paramObject: ParamObjectCallback = {
+            callback: (err, data) => {
+                if (err) {
+                    reject(err);
+                }
+                if (data) {
+                    resolve(data);
+                }
+            },
+        };
+        steam[steamMethod]({ ...paramObject, ...optionals });
     });
 };

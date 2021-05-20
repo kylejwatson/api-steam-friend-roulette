@@ -2,6 +2,8 @@ import { Express } from 'express';
 import steamWeb from 'steam-web';
 import { OwnedGameResponse, AppResponse } from './types';
 import { steamPromise, filterShared, getPromise } from './utils';
+import flatCache from 'flat-cache';
+import path from 'path';
 
 const steamAppUrl = 'https://store.steampowered.com/api/appdetails';
 
@@ -10,6 +12,8 @@ const makeAppUrl = (appIds: string) => {
 };
 
 export const initAppEndpoints = (app: Express, steam: steamWeb) => {
+    const cache = flatCache.load('appCache', process.env.CACHE_DIR);
+
     const getOwned = (steamid: string): Promise<OwnedGameResponse> => {
         return steamPromise(steam, 'getOwnedGames', { steamid, include_appinfo: true });
     };
@@ -78,11 +82,18 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
             return;
         }
         const ids = appIds.split(',');
+        const cacheResult = cache.getKey(appIds);
+        if (cacheResult) {
+            res.send(cacheResult);
+            return;
+        }
         try {
             const appResponse: AppResponse = await getApps(appIds);
             const data = appResponse[appIds].data;
             if (data) {
+                cache.setKey(appIds, data);
                 res.send(data);
+                cache.save();
             } else {
                 res.sendStatus(404);
             }

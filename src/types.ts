@@ -8,9 +8,13 @@ export interface FriendResponse {
         friends: Friend[];
     };
 }
+interface Player {
+    personastate: number;
+    gameid: number;
+}
 export interface SummaryResponse {
     response?: {
-        players: [];
+        players: Player[];
     };
 }
 export interface OwnedGame {

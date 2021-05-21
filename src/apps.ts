@@ -96,7 +96,7 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
                             cache.setKey(id, data);
                             return resolve(data);
                         }
-                        reject(404);
+                        resolve(404);
                     }).catch(err => reject(err));
                 }
 

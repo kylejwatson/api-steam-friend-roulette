@@ -61,9 +61,13 @@ export const initFriendEndpoints = (app: Express, steam: steamWeb) => {
                 res.sendStatus(404);
                 return;
             }
-            const steamIds = friends.map(friend => friend.steamid);
+            const steamIds = friends.map(friend => friend.steamid.toString());
             const summaryResponse = await getSummary(steamIds);
             const players = summaryResponse.response?.players;
+            players.forEach(player => {
+                player.friend_since = friends.find(friend => friend.steamid === player.steamid).friend_since;
+            });
+
             if (!players) {
                 res.sendStatus(404);
             } else {

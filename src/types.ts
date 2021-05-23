@@ -1,5 +1,5 @@
 export interface Friend {
-    steamid: string;
+    steamid: number;
     relationship: string;
     friend_since: number;
 }
@@ -9,8 +9,10 @@ export interface FriendResponse {
     };
 }
 interface Player {
+    steamid: number;
     personastate: number;
     gameid: number;
+    friend_since?: number;
 }
 export interface SummaryResponse {
     response?: {

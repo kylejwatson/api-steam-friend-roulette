@@ -29,7 +29,7 @@ export const initAuth = (app: Express) => {
 
     passport.use(new SteamStrategy({
         returnURL: `${process.env.API_URL}/auth`,
-        realm: process.env.UI_URL,
+        realm: process.env.API_URL,
         apiKey: process.env.STEAM_API_KEY,
         profile: false
     },

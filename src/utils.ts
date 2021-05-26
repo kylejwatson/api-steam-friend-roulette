@@ -60,7 +60,6 @@ export const steamPromise = (steam: steamWeb, steamMethod: string, optionals: Pa
                         err.data = data;
                     }
                     reject(err);
-
                 }
                 if (data) {
                     resolve(data);

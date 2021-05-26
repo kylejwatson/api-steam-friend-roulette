@@ -56,6 +56,6 @@ export interface ParamObjectOptionals {
     include_appinfo?: boolean;
 }
 export interface ParamObjectCallback {
-    callback: (err: Error, data: object) => void;
+    callback: (err: { status: number, data: object }, data: object, statusCode: number) => void;
 }
 export type SteamMethod = (paramObject: ParamObjectCallback & ParamObjectOptionals) => void;

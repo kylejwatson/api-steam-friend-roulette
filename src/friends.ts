@@ -24,7 +24,9 @@ export const initFriendEndpoints = (app: Express, steam: steamWeb) => {
                 res.send(friends);
             }
         } catch (error) {
-            res.status(500).send(error);
+            const status = error.status;
+
+            res.status(status || 500).send(error);
         }
     });
 
@@ -44,7 +46,7 @@ export const initFriendEndpoints = (app: Express, steam: steamWeb) => {
                 res.send(players);
             }
         } catch (error) {
-            res.status(500).send(error);
+            res.status(error.status).send(error);
         }
     });
 
@@ -74,7 +76,7 @@ export const initFriendEndpoints = (app: Express, steam: steamWeb) => {
                 res.send(players);
             }
         } catch (error) {
-            res.status(500).send(error);
+            res.status(error.status).send(error);
         }
     });
 };

@@ -51,9 +51,16 @@ export const getPromise = (url: string): Promise<any> => {
 export const steamPromise = (steam: steamWeb, steamMethod: string, optionals: ParamObjectOptionals) => {
     return new Promise((resolve, reject) => {
         const paramObject: ParamObjectCallback = {
-            callback: (err, data) => {
+            callback: (err, data, status) => {
                 if (err) {
+                    if (!err.status) {
+                        err.status = status || 500;
+                    }
+                    if (!err.data) {
+                        err.data = data;
+                    }
                     reject(err);
+
                 }
                 if (data) {
                     resolve(data);

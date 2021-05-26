@@ -19,7 +19,7 @@
     "flat-cache": "^3.0.4",
     "passport": "^0.4.1",
     "passport-steam": "^1.0.15",
-    "steam-web": "^0.7.0"
+    "steam-web": "github:kylejwatson/nodeSteam#error-handling-improvements"
   },
   "devDependencies": {
     "ts-node": "^9.1.1",

@@ -33,7 +33,7 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
                 res.send(games);
             }
         } catch (error) {
-            res.status(500).send(error);
+            res.status(error.status).send(error);
         }
     });
 
@@ -56,7 +56,7 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
                 res.send(shared);
             }
         } catch (error) {
-            res.status(500).send(error);
+            res.status(error.status).send(error);
         }
     });
 
@@ -70,7 +70,7 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
             const appResponse = await steamPromise(steam, 'getRecentlyPlayedGames', { steamid: steamId });
             res.send(appResponse);
         } catch (error) {
-            res.status(500).send(error);
+            res.status(error.status).send(error);
         }
     });
 

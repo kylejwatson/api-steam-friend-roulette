@@ -1,32 +1,34 @@
-import { OwnedGame, ParamObjectCallback, ParamObjectOptionals, SharedResponse, UserStats } from './types';
+import { OwnedGame, ParamObjectCallback, ParamObjectOptionals, UserStatResponse, UserStats } from './types';
 import * as https from 'https';
 import steamWeb from 'steam-web';
 
-export const filterShared = (ownedLists: OwnedGame[][], steamIds: string[]) => {
-    const sharedList: SharedResponse[] = [];
-    const primaryUsersList = ownedLists[0];
+export const populateUserStats = (ownedLists: OwnedGame[][], steamIds: string[]) => {
+    const userStatList: UserStatResponse[] = [];
 
-    primaryUsersList.forEach(game => {
-        const userStats: UserStats[] = [];
-        const isShared = ownedLists.every((list, index) => {
-            const found = list.find(searchGame => searchGame.appid === game.appid);
-            if (!found) {
-                return false;
+    ownedLists.forEach((userList, userIndex) => {
+        userList.forEach(game => {
+            const userStat = {
+                steamId: steamIds[userIndex],
+                playtime_2weeks: game.playtime_2weeks,
+                playtime_forever: game.playtime_forever
+            };
+            const existing = userStatList.find(existingGame => existingGame.appid === game.appid);
+
+            if (existing) {
+                existing.userStats.push(userStat);
+            } else {
+                userStatList.push({
+                    appid: game.appid,
+                    name: game.name,
+                    img_icon_url: game.img_icon_url,
+                    img_logo_url: game.img_logo_url,
+                    userStats: [userStat]
+                });
             }
-            userStats.push({ steamId: steamIds[index], playtime_2weeks: found.playtime_2weeks, playtime_forever: found.playtime_forever });
-            return true;
         });
-        if (isShared) {
-            sharedList.push({
-                appid: game.appid,
-                name: game.name,
-                img_icon_url: game.img_icon_url,
-                img_logo_url: game.img_logo_url,
-                userStats
-            });
-        }
     });
-    return sharedList;
+
+    return userStatList;
 };
 
 export const getPromise = (url: string): Promise<any> => {

@@ -32,7 +32,7 @@ export interface OwnedGameResponse {
         games: OwnedGame[];
     };
 }
-export interface SharedResponse {
+export interface UserStatResponse {
     appid: number;
     name: string;
     img_icon_url: string;

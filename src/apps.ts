@@ -1,9 +1,8 @@
 import { Express } from 'express';
 import steamWeb from 'steam-web';
 import { OwnedGameResponse, AppResponse } from './types';
-import { steamPromise, filterShared, getPromise } from './utils';
+import { steamPromise, populateUserStats, getPromise } from './utils';
 import flatCache from 'flat-cache';
-import path from 'path';
 
 const steamAppUrl = 'https://store.steampowered.com/api/appdetails';
 
@@ -52,8 +51,8 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
             if (games.every(gameList => gameList.length === 0)) {
                 res.sendStatus(404);
             } else {
-                const shared = filterShared(games, ids);
-                res.send(shared);
+                const userStatResponses = populateUserStats(games, ids);
+                res.send(userStatResponses);
             }
         } catch (error) {
             res.status(error.status).send(error);

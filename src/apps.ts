@@ -82,7 +82,7 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
         }
         const ids = appIds.split(',');
         const promises = ids.map(id => {
-            return new Promise<any>((resolve, reject) => {
+            return new Promise<any>((resolve) => {
                 const cacheResult = cache.getKey(id);
                 if (cacheResult) {
                     cacheResult.fromCache = true;
@@ -96,7 +96,13 @@ export const initAppEndpoints = (app: Express, steam: steamWeb) => {
                             return resolve(data);
                         }
                         resolve(404);
-                    }).catch(err => reject(err));
+                    }).catch(err => {
+                        if (typeof err === 'string') {
+                            err = { error: err };
+                        }
+                        cache.setKey(id, err);
+                        resolve(err);
+                    });
                 }
 
             });
